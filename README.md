@@ -44,17 +44,17 @@ Project Structure
 
 If you're curious about how a 3D application looks when written in Vyne, here is
 the layout:
-
-├── assets/             # 3D models (GLB/OBJ), textures, and UI fonts
-├── shaders/            # GLSL files for the VHS tape, fog, and distortion effects
+```text
+├── assets/             # 3D models, textures, and fonts
+├── shaders/            # GLSL files (VHS, fog, and distortion)
 ├── src/
-│   ├── config.vy       # Flight physics tuning and engine constants
-│   ├── loader.vy       # Asset loading and 3D group deployment
-│   ├── missions.vy     # Target logic, hits, and the smoke particle system
-│   ├── subtitles.vy    # Data for the timed radio dialogue
-│   └── renderer.vy     # Modular logic for drawing the HUD and UI
-└── main.vy             # Entry point: core game loop and render pipeline
-
+│   ├── config.vy       # Physics and engine constants
+│   ├── loader.vy       # Asset loading and deployment
+│   ├── missions.vy     # Target logic and smoke simulation
+│   ├── subtitles.vy    # Radio dialogue data
+│   └── renderer.vy     # HUD and UI rendering
+└── main.vy             # Main entry point and loop
+```
 Flight Controls
 
 | Input         | Action                        |
