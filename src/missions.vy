@@ -85,6 +85,7 @@ fn :: missions update(cam_pos) {
         tank_fire_t = tank_fire_t - 0.016;
         if (tank_fire_t <= 0.0) {
             tank_fire_t = fire_cooldown + (((vmath.random(0, 100) + 0.0) / 100.0) * 0.7);
+            vaudio.play_sound(Audio.tank_shot);
 
             shot_dx = cam_pos[0] - tank_x;
             shot_dy = cam_pos[1] - 12.0;
@@ -170,6 +171,32 @@ fn :: missions enemy_hits_player(cam_pos) {
     return false;
 }
 
+fn :: missions player_hits_tank(shot_pos) {
+    hit_r = 25.0;
+    kept = [];
+    hit_any = false;
+
+    through tank :: enemy_tanks -> loop {
+        tank_x = tank[0];
+        tank_z = tank[1];
+        dx = shot_pos[0] - tank_x;
+        dz = shot_pos[2] - tank_z;
+
+        if (hit_any == false && (dx*dx + dz*dz) < (hit_r * hit_r)) {
+            hit_any = true;
+            Params.score = Params.score + 1;
+        } else {
+            kept = kept + [tank];
+        }
+    };
+
+    if (hit_any) {
+        enemy_tanks = kept;
+    }
+
+    return hit_any;
+}
+
 fn :: missions draw_ui(u_col, cam_pos, camera) {
     cx = 960; cy = 540;
 
@@ -206,6 +233,20 @@ fn :: missions draw_3d_marker() {
         tank_dir_z = tank[3];
 
         vglib.draw_model(Models.target_model, tank_x, 0.0, tank_z, 4.0, army_green);
+
+        # Red square target marker above tank.
+        sq_y = 55.0;
+        sq = 22.0;
+        x1 = tank_x - sq; z1 = tank_z - sq;
+        x2 = tank_x + sq; z2 = tank_z - sq;
+        x3 = tank_x + sq; z3 = tank_z + sq;
+        x4 = tank_x - sq; z4 = tank_z + sq;
+        col = vglib.rgba(255, 0, 0, 220);
+        vglib.line_3d(x1, sq_y, z1, x2, sq_y, z2, col);
+        vglib.line_3d(x2, sq_y, z2, x3, sq_y, z3, col);
+        vglib.line_3d(x3, sq_y, z3, x4, sq_y, z4, col);
+        vglib.line_3d(x4, sq_y, z4, x1, sq_y, z1, col);
+
         vglib.line_3d(
             tank_x, 14.0, tank_z,
             tank_x + (tank_dir_x * 70.0), 20.0, tank_z + (tank_dir_z * 70.0),

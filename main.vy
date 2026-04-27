@@ -42,6 +42,8 @@ lost_alpha = 0.0;
 old_score = 0;
 zoom_amount = 1.0;
 zoom_target = 1.0;
+muzzle_flash_t = 0.0;
+player_shots = [];
 
 # --- ARTILLERY EVENT STATE ---
 strike_active = false;
@@ -82,6 +84,7 @@ vaudio.sound_volume(Audio.chatter, 3.0);
 vaudio.sound_volume(Audio.drone_flying, 0.8);
 vaudio.sound_volume(Audio.explosion, 2.9);
 vaudio.sound_volume(Audio.explosion_drone, 1.3);
+vaudio.sound_volume(Audio.tank_shot, 1.5);
 vaudio.sound_volume(Audio.siren, 1.0);
 vaudio.sound_volume(Audio.signal_lost, 1.0);
 
@@ -147,6 +150,21 @@ while (vglib.running()) {
 
     cam_pos = vglib.get_pos(camera);
     cam_y = cam_pos[1];
+
+    # Player fire (U key). Uses GLFW keycode 85 to avoid missing key constants.
+    if (vglib.key_pressed(85) && crash_active == false && signal_lost == false) {
+        muzzle_flash_t = 0.12;
+        yaw = vglib.get_yaw(camera);
+        ang = vmath.radians(yaw + 90.0);
+        dir_x = vmath.cos(ang);
+        dir_z = vmath.sin(ang);
+        shot_speed = 90.0;
+        player_shots = player_shots + [[
+            cam_pos[0] + (dir_x * 8.0), cam_pos[1], cam_pos[2] + (dir_z * 8.0),
+            dir_x * shot_speed, 0.0, dir_z * shot_speed,
+            1.4
+        ]];
+    }
 
     # Safe zoom controls (keyboard only): Shift+W zooms in, Shift+S zooms out.
     if (zoom_target < 1.0) { zoom_target = 1.0; }
@@ -283,6 +301,24 @@ while (vglib.running()) {
 
                 vglib.draw_persistent_group("forest_trees", Models.tree_model, cam_pos, 2000.0);
                 missions.draw_3d_marker();
+
+                # Simulate + draw player shots in 3D, and check tank hits.
+                next_shots = [];
+                through s :: player_shots -> loop {
+                    nx = s[0] + s[3];
+                    ny = s[1] + s[4];
+                    nz = s[2] + s[5];
+                    life = s[6] - 0.016;
+
+                    vglib.line_3d(s[0], s[1], s[2], nx, ny, nz, vglib.rgba(255, 80, 80, 220));
+
+                    if (life > 0.0) {
+                        if (missions.player_hits_tank([nx, ny, nz]) == false) {
+                            next_shots = next_shots + [[nx, ny, nz, s[3], s[4], s[5], life]];
+                        }
+                    }
+                };
+                player_shots = next_shots;
             vglib.end_shader();
         vglib.end3d();
     vglib.end_texture_mode();
@@ -290,6 +326,7 @@ while (vglib.running()) {
     # 2. FINAL UI & COLOR SHADER
     vglib.begin();
         vglib.clear(vglib.BLACK);
+        if (muzzle_flash_t > 0.0) { muzzle_flash_t = muzzle_flash_t - 0.016; }
 
         if (intro_finished == false) {
             intro_time = intro_time + 0.016;
@@ -389,6 +426,11 @@ while (vglib.running()) {
                 vglib.begin_shader(Shaders.vhs_color);
                     vglib.draw_render_texture(screen_target); 
                 vglib.end_shader();
+
+                # Muzzle flash animation (downloaded sprite).
+                if (muzzle_flash_t > 0.0) {
+                    vglib.draw_texture(Textures.muzzle_flash, 960 - 64, 540 - 64, vglib.WHITE);
+                }
 
                 u_col = vglib.rgba(180, 255, 180, 180);
 

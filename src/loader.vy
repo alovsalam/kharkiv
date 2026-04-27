@@ -22,6 +22,8 @@ group Textures {
     through p :: paths -> loop {
         slots = slots + [vglib.load_texture(p)];
     };
+
+    muzzle_flash = vglib.load_texture("assets/muzzle_flash.png");
 };
 
 
@@ -34,6 +36,7 @@ group Audio :: assets {
     drone_flying = vaudio.load_sound("assets/drone-flying.ogg");
     explosion = vaudio.load_sound("assets/explosion.ogg");
     explosion_drone = vaudio.load_sound("assets/explosion_drone.ogg");
+    tank_shot = vaudio.load_sound("assets/tank_shot.ogg");
     siren = vaudio.load_sound("assets/siren.ogg");
     signal_lost = vaudio.load_sound("assets/signal_lost.ogg");
 };
