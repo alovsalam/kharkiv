@@ -429,7 +429,7 @@ while (vglib.running()) {
 
                 # Muzzle flash animation (downloaded sprite).
                 if (muzzle_flash_t > 0.0) {
-                    vglib.draw_texture(Textures.muzzle_flash, 960 - 64, 540 - 64, vglib.WHITE);
+                    vglib.draw_texture(Textures.muzzle_flash, 960 - 64, 540 - 64, 128, 128);
                 }
 
                 u_col = vglib.rgba(180, 255, 180, 180);
