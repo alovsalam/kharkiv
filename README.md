@@ -1,58 +1,79 @@
-# 🛸 VyneDrone: Kharkiv Operation
+VyneDrone: Kharkiv Operation
 
-**VyneDrone** is a low-poly, military-style FPV drone simulator built entirely on **Vyne** — a custom-developed programming language and interpreter written in C++. This project demonstrates the capabilities of the Vyne language in handling real-time 3D rendering, complex math, and state management.
+This is a fork of the VyneDrone project, a low-poly military FPV drone
+simulator. What makes this project interesting is that it isn't built in Unity
+or Unreal—it's written entirely in Vyne, a custom C++ based programming language
+and AST interpreter.
 
-## 🛠️ Technical Architecture
+I didn't create the Vyne language or the original codebase, but I'm
+maintaining/expanding this fork to see how far we can push a custom interpreter
+with real-time 3D rendering, flight math, and state management.
 
-This project is more than just a game; it is an engine showcase for the Vyne language:
+Under the Hood
 
-- **Core Engine:** Vyne Interpreter (C++ based AST Interpreter).
-- **Graphics:** Custom `vglib` module providing a high-level bridge to Raylib.
-- **Shaders:** Custom GLSL shaders for VHS distortion, pixelation, and volumetric fog.
-- **Memory Management:** Leverages Vyne's internal memory tracking and optimized symbol table lookups.
+Because this relies entirely on the Vyne interpreter instead of an established
+game engine, the tech stack looks a bit different:
 
-## 🚀 Features
+  - The Engine: Runs strictly on the Vyne C++ AST Interpreter.
+  - Graphics Bridge: Uses a custom vglib module that allows the Vyne code to
+    communicate directly with Raylib for rendering.
+  - Shaders: The visual style (VHS distortion, pixelation, and volumetric fog)
+    is handled by custom GLSL shaders hooked into the pipeline.
+  - Memory Handling: The simulator relies heavily on Vyne's internal memory
+    tracking and symbol table lookups to keep the framerate steady during
+    flight.
 
-- **FPV Flight Physics:** Realistic drone handling including Pitch, Yaw, and Roll dynamics.
-- **Military OSD/HUD:** A high-fidelity "Night Vision" interface featuring:
-  - Dynamic Telemetry (Latitude, Longitude, and Elevation).
-  - Live Altimeter and Compass bars.
-  - Target Locking indicator.
-- **Persistent Impact System:**
-  - Procedural Forest & Kharkiv Map generation.
-  - **Volumetric Smoke:** When a target is destroyed, a persistent, animated smoke plume remains at the impact site using a custom particle simulation logic.
-- **Cinematic Immersion:**
-  - VHS Bodycam post-processing.
-  - Real-time Radio Chatter with a timed subtitle system.
-  - Signal Loss & Crash sequences triggered by terrain collision.
+Features
 
-## 📂 Project Structure
+The focus is on making the drone flight feel heavy and realistic, with a gritty
+military aesthetic.
 
-```bash
-├── assets/             # 3D Models (GLB/OBJ), Textures, and Fonts
-├── shaders/            # VHS, Fog, and VHS-Distortion GLSL files
+  - Flight Physics: Handles true FPV dynamics. Pitch, yaw, and roll use actual
+    momentum and bank mechanics rather than simple directional movement.
+  - Tactical HUD: A night-vision interface that pulls live telemetry
+    (lat/long/elevation), an active altimeter, compass data, and a target lock
+    indicator.
+  - Persistent Destruction: The map is a procedurally generated forest set in
+    Kharkiv. Destroying a target triggers a custom particle system, leaving
+    behind a persistent volumetric smoke plume while you keep flying.
+  - Cinematics: Visuals are run through a VHS post-processing filter. There's
+    also a timed subtitle system for live radio chatter, and a hard signal-loss
+    sequence if you crash into the terrain.
+
+Project Structure
+
+If you're curious about how a 3D application looks when written in Vyne, here is
+the layout:
+
+├── assets/             # 3D models (GLB/OBJ), textures, and UI fonts
+├── shaders/            # GLSL files for the VHS tape, fog, and distortion effects
 ├── src/
-│   ├── config.vy       # Flight physics and engine constants
-│   ├── loader.vy       # Asset management and group deployment
-│   ├── missions.vy     # Target logic and volumetric smoke simulation
-│   ├── subtitles.vy    # Timed radio dialogue data
-│   └── renderer.vy     # Modular HUD and UI rendering logic
-└── main.vy             # Entry point: Main loop and 3D render pipeline
-```
+│   ├── config.vy       # Flight physics tuning and engine constants
+│   ├── loader.vy       # Asset loading and 3D group deployment
+│   ├── missions.vy     # Target logic, hits, and the smoke particle system
+│   ├── subtitles.vy    # Data for the timed radio dialogue
+│   └── renderer.vy     # Modular logic for drawing the HUD and UI
+└── main.vy             # Entry point: core game loop and render pipeline
 
-## 🎮 Controls
+Flight Controls
 
-| Key            | Function                        |
-| :------------- | :------------------------------ |
-| **Mouse**      | Directional Control (Yaw/Pitch) |
-| **W / S**      | Elevation (Up/Down)             |
-| **Q / E**      | Bank/Roll (Left/Right)          |
-| **Left Shift** | Sprint/Boost                    |
-| **Enter**      | Reset System (Post-Signal Loss) |
-| **Escape**     | Enable Mouse Cursor             |
-| **Shift + W**  | Focal Narrowing                 |
-| **Shift + S**  | Focal Expansion                 |
+| Input         | Action                        |
+| :------------ | :---------------------------- |
+| Mouse         | Look around (Yaw/Pitch)       |
+| W / S         | Altitude (Up/Down)            |
+| Q / E         | Bank/Roll (Left/Right)        |
+| Left Shift    | Throttle Boost                |
+| Shift + W / S | Adjust Camera FOV / Zoom      |
+| Enter         | Reboot system (after a crash) |
+| Escape        | Free the mouse cursor         |
 
-## 🛠️ Running the Project
+How to Run It
 
-The project requires the **Vyne Interpreter** to be built and accessible in your environment. See official [vyne](https://github.com/t2ncay/vyne) repository for installation.
+Since this is written in Vyne, there's no standalone executable. You will need
+the Vyne interpreter installed on your machine to run the scripts.
+
+1.  Grab the interpreter from the original creator's repo: t2ncay/vyne
+2.  Build and install it using their provided instructions.
+3.  Clone this fork, navigate to the directory, and run:
+    vyne main.vy
+
