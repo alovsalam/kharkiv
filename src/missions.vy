@@ -277,66 +277,7 @@ fn :: missions draw_ui(u_col, cam_pos, camera) {
     vglib.circle(ptr_x, ptr_y, 4.0, u_col);
     vglib.line(cx + vmath.cos(total_angle) * 140.0, cy + vmath.sin(total_angle) * 140.0, ptr_x, ptr_y, u_col);
 
-    # Screen-space target boxes, projected from player POV instead of literal 3D squares.
-    screen_w = 1920.0;
-    screen_h = 1080.0;
-    half_w = screen_w / 2.0;
-    half_h = screen_h / 2.0;
-    fov_x = vmath.radians(100.0);
-    fov_y = fov_x * (screen_h / screen_w);
-    tan_half_x = vmath.tan(fov_x / 2.0);
-    tan_half_y = vmath.tan(fov_y / 2.0);
-    cam_y = cam_pos[1];
-    cam_yaw = vglib.get_yaw(camera);
 
-    through tank :: enemy_tanks -> loop {
-        tank_x = tank[0];
-        tank_z = tank[1];
-        mark_y = 28.0;
-
-        rel_x = tank_x - cam_pos[0];
-        rel_z = tank_z - cam_pos[2];
-        rel_y = mark_y - cam_y;
-
-        flat_dist = vmath.hypot(rel_x, rel_z);
-        if (flat_dist > 0.001) {
-            target_yaw = vmath.degrees(vmath.atan2(rel_z, rel_x)) - 90.0;
-            yaw_diff = target_yaw - cam_yaw;
-
-            if (yaw_diff > 180.0) { yaw_diff = yaw_diff - 360.0; }
-            if (yaw_diff < -180.0) { yaw_diff = yaw_diff + 360.0; }
-
-            pitch_angle = vmath.atan2(rel_y, flat_dist);
-            x_ndc = vmath.tan(vmath.radians(yaw_diff)) / tan_half_x;
-            y_ndc = -(vmath.tan(pitch_angle) / tan_half_y);
-
-            if (x_ndc > -1.15 && x_ndc < 1.15) {
-                sx = half_w + (x_ndc * half_w);
-                sy = half_h + (y_ndc * half_h);
-
-                box_size = 70.0 - (flat_dist * 0.018);
-                if (box_size < 22.0) { box_size = 22.0; }
-                if (box_size > 72.0) { box_size = 72.0; }
-
-                box_x = sx - (box_size / 2.0);
-                box_y = sy - (box_size / 2.0);
-                red = vglib.rgba(255, 40, 40, 220);
-                seg = box_size * 0.35;
-
-                vglib.line(box_x, box_y, box_x + seg, box_y, red);
-                vglib.line(box_x, box_y, box_x, box_y + seg, red);
-
-                vglib.line(box_x + box_size, box_y, box_x + box_size - seg, box_y, red);
-                vglib.line(box_x + box_size, box_y, box_x + box_size, box_y + seg, red);
-
-                vglib.line(box_x, box_y + box_size, box_x + seg, box_y + box_size, red);
-                vglib.line(box_x, box_y + box_size, box_x, box_y + box_size - seg, red);
-
-                vglib.line(box_x + box_size, box_y + box_size, box_x + box_size - seg, box_y + box_size, red);
-                vglib.line(box_x + box_size, box_y + box_size, box_x + box_size, box_y + box_size - seg, red);
-            }
-        }
-    };
 }
 
 fn :: missions draw_3d_marker() {

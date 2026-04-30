@@ -45,15 +45,21 @@ Project Structure
 If you're curious about how a 3D application looks when written in Vyne, here is
 the layout:
 ```text
-├── assets/             # 3D models, textures, and fonts
-├── shaders/            # GLSL files (VHS, fog, and distortion)
-├── src/
-│   ├── config.vy       # Physics and engine constants
-│   ├── loader.vy       # Asset loading and deployment
-│   ├── missions.vy     # Target logic and smoke simulation
-│   ├── subtitles.vy    # Radio dialogue data
-│   └── renderer.vy     # HUD and UI rendering
-└── main.vy             # Main entry point and loop
+assets/                 # 3D models, textures, audio, and fonts
+maps/                   # Kharkiv world map data
+shaders/                # GLSL files (VHS, fog, and distortion)
+src/
+  audio_system.vy       # Sound startup, volume setup, and looping ambience
+  config.vy             # Physics and engine constants
+  events.vy             # Crash, signal-loss, siren, and artillery state changes
+  loader.vy             # Asset loading and deployment
+  missions.vy           # Target logic, enemy tanks, projectiles, and strikes
+  player.vy             # Drone camera controls, zoom, roll, and player shots
+  renderer.vy           # Render target pass, intro, signal loss, HUD, and UI
+  state.vy              # Shared runtime, crash, and strike state groups
+  subtitles.vy          # Radio dialogue data
+  world.vy              # Map loading, forest generation, and world drawing
+main.vy                 # Thin entry point and game loop orchestration
 ```
 Flight Controls
 
