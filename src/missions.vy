@@ -197,6 +197,59 @@ fn :: missions player_hits_tank(shot_pos) {
     return hit_any;
 }
 
+# Checks whether the shot segment (A->B in XZ) intersects a tank hit circle.
+# This fixes "skipping" when projectiles move far per frame.
+fn :: missions player_hits_tank_segment(a_pos, b_pos) {
+    hit_r = 25.0;
+    hit_r2 = hit_r * hit_r;
+    kept = [];
+    hit_any = false;
+
+    ax = a_pos[0]; az = a_pos[2];
+    bx = b_pos[0]; bz = b_pos[2];
+    vx = bx - ax;
+    vz = bz - az;
+    vv = (vx * vx) + (vz * vz);
+
+    through tank :: enemy_tanks -> loop {
+        tank_x = tank[0];
+        tank_z = tank[1];
+
+        if (hit_any == false) {
+            wx = tank_x - ax;
+            wz = tank_z - az;
+
+            t = 0.0;
+            if (vv > 0.000001) {
+                t = ((wx * vx) + (wz * vz)) / vv;
+            }
+
+            if (t < 0.0) { t = 0.0; }
+            if (t > 1.0) { t = 1.0; }
+
+            px = ax + (vx * t);
+            pz = az + (vz * t);
+
+            dx = tank_x - px;
+            dz = tank_z - pz;
+            if ((dx * dx) + (dz * dz) < hit_r2) {
+                hit_any = true;
+                Params.score = Params.score + 1;
+            } else {
+                kept = kept + [tank];
+            }
+        } else {
+            kept = kept + [tank];
+        }
+    };
+
+    if (hit_any) {
+        enemy_tanks = kept;
+    }
+
+    return hit_any;
+}
+
 fn :: missions draw_ui(u_col, cam_pos, camera) {
     cx = 960; cy = 540;
 
@@ -223,6 +276,67 @@ fn :: missions draw_ui(u_col, cam_pos, camera) {
     
     vglib.circle(ptr_x, ptr_y, 4.0, u_col);
     vglib.line(cx + vmath.cos(total_angle) * 140.0, cy + vmath.sin(total_angle) * 140.0, ptr_x, ptr_y, u_col);
+
+    # Screen-space target boxes, projected from player POV instead of literal 3D squares.
+    screen_w = 1920.0;
+    screen_h = 1080.0;
+    half_w = screen_w / 2.0;
+    half_h = screen_h / 2.0;
+    fov_x = vmath.radians(100.0);
+    fov_y = fov_x * (screen_h / screen_w);
+    tan_half_x = vmath.tan(fov_x / 2.0);
+    tan_half_y = vmath.tan(fov_y / 2.0);
+    cam_y = cam_pos[1];
+    cam_yaw = vglib.get_yaw(camera);
+
+    through tank :: enemy_tanks -> loop {
+        tank_x = tank[0];
+        tank_z = tank[1];
+        mark_y = 28.0;
+
+        rel_x = tank_x - cam_pos[0];
+        rel_z = tank_z - cam_pos[2];
+        rel_y = mark_y - cam_y;
+
+        flat_dist = vmath.hypot(rel_x, rel_z);
+        if (flat_dist > 0.001) {
+            target_yaw = vmath.degrees(vmath.atan2(rel_z, rel_x)) - 90.0;
+            yaw_diff = target_yaw - cam_yaw;
+
+            if (yaw_diff > 180.0) { yaw_diff = yaw_diff - 360.0; }
+            if (yaw_diff < -180.0) { yaw_diff = yaw_diff + 360.0; }
+
+            pitch_angle = vmath.atan2(rel_y, flat_dist);
+            x_ndc = vmath.tan(vmath.radians(yaw_diff)) / tan_half_x;
+            y_ndc = -(vmath.tan(pitch_angle) / tan_half_y);
+
+            if (x_ndc > -1.15 && x_ndc < 1.15) {
+                sx = half_w + (x_ndc * half_w);
+                sy = half_h + (y_ndc * half_h);
+
+                box_size = 70.0 - (flat_dist * 0.018);
+                if (box_size < 22.0) { box_size = 22.0; }
+                if (box_size > 72.0) { box_size = 72.0; }
+
+                box_x = sx - (box_size / 2.0);
+                box_y = sy - (box_size / 2.0);
+                red = vglib.rgba(255, 40, 40, 220);
+                seg = box_size * 0.35;
+
+                vglib.line(box_x, box_y, box_x + seg, box_y, red);
+                vglib.line(box_x, box_y, box_x, box_y + seg, red);
+
+                vglib.line(box_x + box_size, box_y, box_x + box_size - seg, box_y, red);
+                vglib.line(box_x + box_size, box_y, box_x + box_size, box_y + seg, red);
+
+                vglib.line(box_x, box_y + box_size, box_x + seg, box_y + box_size, red);
+                vglib.line(box_x, box_y + box_size, box_x, box_y + box_size - seg, red);
+
+                vglib.line(box_x + box_size, box_y + box_size, box_x + box_size - seg, box_y + box_size, red);
+                vglib.line(box_x + box_size, box_y + box_size, box_x + box_size, box_y + box_size - seg, red);
+            }
+        }
+    };
 }
 
 fn :: missions draw_3d_marker() {
@@ -233,19 +347,6 @@ fn :: missions draw_3d_marker() {
         tank_dir_z = tank[3];
 
         vglib.draw_model(Models.target_model, tank_x, 0.0, tank_z, 4.0, army_green);
-
-        # Red square target marker above tank.
-        sq_y = 55.0;
-        sq = 22.0;
-        x1 = tank_x - sq; z1 = tank_z - sq;
-        x2 = tank_x + sq; z2 = tank_z - sq;
-        x3 = tank_x + sq; z3 = tank_z + sq;
-        x4 = tank_x - sq; z4 = tank_z + sq;
-        col = vglib.rgba(255, 0, 0, 220);
-        vglib.line_3d(x1, sq_y, z1, x2, sq_y, z2, col);
-        vglib.line_3d(x2, sq_y, z2, x3, sq_y, z3, col);
-        vglib.line_3d(x3, sq_y, z3, x4, sq_y, z4, col);
-        vglib.line_3d(x4, sq_y, z4, x1, sq_y, z1, col);
 
         vglib.line_3d(
             tank_x, 14.0, tank_z,

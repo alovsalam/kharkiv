@@ -153,16 +153,16 @@ while (vglib.running()) {
 
     # Player fire (U key). Uses GLFW keycode 85 to avoid missing key constants.
     if (vglib.key_pressed(85) && crash_active == false && signal_lost == false) {
-        muzzle_flash_t = 0.12;
         yaw = vglib.get_yaw(camera);
         ang = vmath.radians(yaw + 90.0);
         dir_x = vmath.cos(ang);
         dir_z = vmath.sin(ang);
-        shot_speed = 90.0;
+        shot_speed = 18.0;
+        vaudio.play_sound(Audio.tank_shot);
         player_shots = player_shots + [[
-            cam_pos[0] + (dir_x * 8.0), cam_pos[1], cam_pos[2] + (dir_z * 8.0),
+            cam_pos[0] + (dir_x * 8.0), cam_pos[1] - 3.0, cam_pos[2] + (dir_z * 8.0),
             dir_x * shot_speed, 0.0, dir_z * shot_speed,
-            1.4
+            3.2
         ]];
     }
 
@@ -309,11 +309,17 @@ while (vglib.running()) {
                     ny = s[1] + s[4];
                     nz = s[2] + s[5];
                     life = s[6] - 0.016;
+                    tail_x = s[0] - (s[3] * 0.7);
+                    tail_y = s[1] - (s[4] * 0.7);
+                    tail_z = s[2] - (s[5] * 0.7);
 
-                    vglib.line_3d(s[0], s[1], s[2], nx, ny, nz, vglib.rgba(255, 80, 80, 220));
+                    # Draw player round as a visible tracer, similar to enemy tank fire.
+                    vglib.line_3d(tail_x, tail_y, tail_z, s[0], s[1], s[2], vglib.rgba(255, 90, 90, 255));
+                    vglib.line_3d(s[0], s[1], s[2], nx, ny, nz, vglib.rgba(255, 210, 120, 240));
 
                     if (life > 0.0) {
-                        if (missions.player_hits_tank([nx, ny, nz]) == false) {
+                        # Use segment hit test so fast shots can't "skip" tanks.
+                        if (missions.player_hits_tank_segment([s[0], 0.0, s[2]], [nx, 0.0, nz]) == false) {
                             next_shots = next_shots + [[nx, ny, nz, s[3], s[4], s[5], life]];
                         }
                     }
@@ -326,7 +332,6 @@ while (vglib.running()) {
     # 2. FINAL UI & COLOR SHADER
     vglib.begin();
         vglib.clear(vglib.BLACK);
-        if (muzzle_flash_t > 0.0) { muzzle_flash_t = muzzle_flash_t - 0.016; }
 
         if (intro_finished == false) {
             intro_time = intro_time + 0.016;
@@ -426,11 +431,6 @@ while (vglib.running()) {
                 vglib.begin_shader(Shaders.vhs_color);
                     vglib.draw_render_texture(screen_target); 
                 vglib.end_shader();
-
-                # Muzzle flash animation (downloaded sprite).
-                if (muzzle_flash_t > 0.0) {
-                    vglib.draw_texture(Textures.muzzle_flash, 960 - 64, 540 - 64, 128, 128);
-                }
 
                 u_col = vglib.rgba(180, 255, 180, 180);
 
