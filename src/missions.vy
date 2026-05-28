@@ -57,7 +57,16 @@ fn :: missions init_next() {
 fn :: missions update(cam_pos) {    
     # Update all tanks: move, aim and shoot.
     updated_tanks = [];
+    visible_count = 0;
+    max_update_per_frame = 4;
+    
     through tank :: enemy_tanks -> loop {
+        if (visible_count >= max_update_per_frame) {
+            updated_tanks = updated_tanks + [tank];
+            visible_count = visible_count + 1;
+            continue;
+        }
+        
         tank_x = tank[0];
         tank_z = tank[1];
         tank_dir_x = tank[2];
@@ -104,6 +113,7 @@ fn :: missions update(cam_pos) {
         }
 
         updated_tanks = updated_tanks + [[tank_x, tank_z, tank_dir_x, tank_dir_z, tank_fire_t]];
+        visible_count = visible_count + 1;
     };
     enemy_tanks = updated_tanks;
 
@@ -113,9 +123,17 @@ fn :: missions update(cam_pos) {
         aim_dir = [enemy_tanks[0][2], 0.0, enemy_tanks[0][3]];
     }
 
-    # Simulate projectiles.
+    # Simulate projectiles - limit updates per frame for performance.
     next_projectiles = [];
+    proj_count = 0;
+    max_proj_update = 20;
     through shot :: enemy_projectiles -> loop {
+        if (proj_count >= max_proj_update) {
+            next_projectiles = next_projectiles + [shot];
+            proj_count = proj_count + 1;
+            continue;
+        }
+        
         new_x = shot[0] + shot[3];
         new_y = shot[1] + shot[4];
         new_z = shot[2] + shot[5];
@@ -124,6 +142,7 @@ fn :: missions update(cam_pos) {
         if (new_life > 0.0) {
             next_projectiles = next_projectiles + [[new_x, new_y, new_z, shot[3], shot[4], shot[5], new_life]];
         }
+        proj_count = proj_count + 1;
     };
     enemy_projectiles = next_projectiles;
 
@@ -281,7 +300,11 @@ fn :: missions draw_ui(u_col, cam_pos, camera) {
 }
 
 fn :: missions draw_3d_marker() {
+    visible_count = 0;
+    
     through tank :: enemy_tanks -> loop {
+        if (visible_count >= Engine.max_visible_tanks) { break; }
+        
         tank_x = tank[0];
         tank_z = tank[1];
         tank_dir_x = tank[2];
@@ -294,7 +317,10 @@ fn :: missions draw_3d_marker() {
             tank_x + (tank_dir_x * 70.0), 20.0, tank_z + (tank_dir_z * 70.0),
             vglib.rgba(255, 140, 80, 150)
         );
+        
+        visible_count = visible_count + 1;
     };
+    
     vglib.line_3d(target_pos[0], 0.0, target_pos[2], target_pos[0], 500.0, target_pos[2], vglib.rgba(255, 0, 0, 100));
 
     through shot :: enemy_projectiles -> loop {

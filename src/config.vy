@@ -5,7 +5,7 @@ ruleset { dynamic_casting, warnings };
 group Engine {
     screen_w = 1920;
     screen_h = 1080;
-    target_fps = 75;
+    target_fps = 60;
     app_title = "Drone FPV - Kharkiv Operation v0.1";
     is_fullscreen = true;
 
@@ -20,6 +20,10 @@ group Engine {
     intro_dur = 7.0;
     fade_speed = 3.0;
     ui_glitch_duration = 2.5;
+    
+    render_distance_map = 130.0;
+    render_distance_trees = 2000.0;
+    max_visible_tanks = 12;
 };
 
 out("CONFIG: System parameters initialized successfully.");
