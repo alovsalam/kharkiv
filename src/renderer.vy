@@ -165,6 +165,7 @@ fn :: renderer draw_live_feed(camera, cam_pos) {
     vglib.end_shader();
 
     u_col = vglib.rgba(180, 255, 180, 180);
+    
     missions.draw_ui(u_col, cam_pos, camera);
 
     renderer.draw_crosshair(u_col, ui_offset_x, ui_offset_y);
@@ -201,8 +202,9 @@ fn :: renderer draw_altimeter(u_col, cam_y, ui_offset_x, ui_offset_y) {
 
     vglib.line(alt_base_x + 25, alt_base_y - 150, alt_base_x + 25, alt_base_y + 150, u_col);
 
+    offset_y = int64(cam_y * scaling_factor) % 30;
+    
     through i :: -6..6 -> loop {
-        offset_y = int64(cam_y * scaling_factor) % 30;
         curr_y = alt_base_y - (i * 30) + offset_y;
 
         if (curr_y > (alt_base_y - 150)) {
@@ -234,6 +236,8 @@ fn :: renderer draw_compass(u_col, ui_offset_x, ui_offset_y) {
 }
 
 fn :: renderer draw_telemetry(u_col, cam_pos, ui_offset_x, ui_offset_y) {
+    cached_zoom = PlayerFlight.zoom_amount;
+    
     vglib.text_ex(renderer_font, "3 C", 60, 40, 18, u_col);
     vglib.text_ex(renderer_font, "AREA: 34M2", 60, 70, 18, u_col);
 
@@ -247,6 +251,6 @@ fn :: renderer draw_telemetry(u_col, cam_pos, ui_offset_x, ui_offset_y) {
     vglib.text_ex(renderer_font, grid_str_z, 1650 + ui_offset_x, 70 + ui_offset_y, 18, u_col);
     vglib.text_ex(renderer_font, "ELV: " + string(int64(cam_pos[1])) + "m MSL", 1650 + ui_offset_x, 100 + ui_offset_y, 18, u_col);
 
-    zoom_label = "ZOOM: " + string(int64(PlayerFlight.zoom_amount * 10.0) / 10.0) + "x";
+    zoom_label = "ZOOM: " + string(int64(cached_zoom * 10.0) / 10.0) + "x";
     vglib.text_ex(renderer_font, zoom_label, 1650 + ui_offset_x, 130 + ui_offset_y, 18, u_col);
 }
